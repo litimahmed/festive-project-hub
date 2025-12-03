@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useAboutUs } from "@/hooks/admin/useAboutUs";
-import { AboutNousFormData, AboutNousResponse } from "@/types/admin/aboutUs";
+import { AboutNousFormData } from "@/types/admin/aboutUs";
 import { 
   FileText, 
   Save, 
@@ -59,41 +59,37 @@ const defaultFormData: AboutNousFormData = {
 export default function AboutUsEdit() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { versions, isLoadingVersions, updateAboutUs, isUpdating } = useAboutUs();
+  const { useAboutUsById, updateAboutUs, isUpdating } = useAboutUs();
+  const { data: currentVersion, isLoading: isLoadingVersion } = useAboutUsById(id);
   const [activeLanguage, setActiveLanguage] = useState<Language>("en");
   const [formData, setFormData] = useState<AboutNousFormData>(defaultFormData);
-  const [currentVersion, setCurrentVersion] = useState<AboutNousResponse | null>(null);
 
   // Load version data
   useEffect(() => {
-    if (versions && id) {
-      const version = versions.find((v) => v.about_id === id);
-      if (version) {
-        setCurrentVersion(version);
-        // Convert API format to form format
-        const extractValue = (field: any, lang: Language): string => {
-          if (!field) return "";
-          if (typeof field === "string") return field;
-          if (Array.isArray(field)) {
-            return field.find((f: any) => f.lang === lang)?.value || "";
-          }
-          return "";
-        };
+    if (currentVersion) {
+      // Convert API format to form format
+      const extractValue = (field: any, lang: Language): string => {
+        if (!field) return "";
+        if (typeof field === "string") return field;
+        if (Array.isArray(field)) {
+          return field.find((f: any) => f.lang === lang)?.value || "";
+        }
+        return "";
+      };
 
-        setFormData({
-          titre: { ar: extractValue(version.titre, "ar"), fr: extractValue(version.titre, "fr"), en: extractValue(version.titre, "en") },
-          contenu: { ar: extractValue(version.contenu, "ar"), fr: extractValue(version.contenu, "fr"), en: extractValue(version.contenu, "en") },
-          mission: { ar: extractValue(version.mission, "ar"), fr: extractValue(version.mission, "fr"), en: extractValue(version.mission, "en") },
-          vision: { ar: extractValue(version.vision, "ar"), fr: extractValue(version.vision, "fr"), en: extractValue(version.vision, "en") },
-          valeurs: { ar: extractValue(version.valeurs, "ar"), fr: extractValue(version.valeurs, "fr"), en: extractValue(version.valeurs, "en") },
-          pourquoi_choisir_nous: { ar: extractValue(version.pourquoi_choisir_nous, "ar"), fr: extractValue(version.pourquoi_choisir_nous, "fr"), en: extractValue(version.pourquoi_choisir_nous, "en") },
-          qui_nous_servons: { ar: extractValue(version.qui_nous_servons, "ar"), fr: extractValue(version.qui_nous_servons, "fr"), en: extractValue(version.qui_nous_servons, "en") },
-          slogan: { ar: extractValue(version.slogan, "ar"), fr: extractValue(version.slogan, "fr"), en: extractValue(version.slogan, "en") },
-          active: version.active === true || version.active === "true" || version.active === "1",
-        });
-      }
+      setFormData({
+        titre: { ar: extractValue(currentVersion.titre, "ar"), fr: extractValue(currentVersion.titre, "fr"), en: extractValue(currentVersion.titre, "en") },
+        contenu: { ar: extractValue(currentVersion.contenu, "ar"), fr: extractValue(currentVersion.contenu, "fr"), en: extractValue(currentVersion.contenu, "en") },
+        mission: { ar: extractValue(currentVersion.mission, "ar"), fr: extractValue(currentVersion.mission, "fr"), en: extractValue(currentVersion.mission, "en") },
+        vision: { ar: extractValue(currentVersion.vision, "ar"), fr: extractValue(currentVersion.vision, "fr"), en: extractValue(currentVersion.vision, "en") },
+        valeurs: { ar: extractValue(currentVersion.valeurs, "ar"), fr: extractValue(currentVersion.valeurs, "fr"), en: extractValue(currentVersion.valeurs, "en") },
+        pourquoi_choisir_nous: { ar: extractValue(currentVersion.pourquoi_choisir_nous, "ar"), fr: extractValue(currentVersion.pourquoi_choisir_nous, "fr"), en: extractValue(currentVersion.pourquoi_choisir_nous, "en") },
+        qui_nous_servons: { ar: extractValue(currentVersion.qui_nous_servons, "ar"), fr: extractValue(currentVersion.qui_nous_servons, "fr"), en: extractValue(currentVersion.qui_nous_servons, "en") },
+        slogan: { ar: extractValue(currentVersion.slogan, "ar"), fr: extractValue(currentVersion.slogan, "fr"), en: extractValue(currentVersion.slogan, "en") },
+        active: currentVersion.active === true || currentVersion.active === "true" || currentVersion.active === "1",
+      });
     }
-  }, [versions, id]);
+  }, [currentVersion]);
 
   const handleFieldChange = (fieldKey: string, lang: Language, value: string) => {
     setFormData(prev => ({
@@ -107,7 +103,7 @@ export default function AboutUsEdit() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentVersion) return;
+    if (!currentVersion || !id) return;
 
     const toTranslationArray = (field: { ar: string; fr: string; en: string }) => [
       { lang: "ar" as const, value: field.ar },
@@ -129,14 +125,14 @@ export default function AboutUsEdit() {
     };
 
     try {
-      await updateAboutUs(currentVersion.about_id!, payload);
+      await updateAboutUs(id, payload);
       navigate("/admin/about-us/versions");
     } catch (err) {
       // Error handled in hook
     }
   };
 
-  if (isLoadingVersions) {
+  if (isLoadingVersion) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
