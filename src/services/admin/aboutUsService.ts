@@ -95,7 +95,7 @@ export const updateAboutUs = async (
 
 export const toggleAboutUsActive = async (aboutId: string): Promise<AboutNousResponse> => {
   const accessToken = localStorage.getItem("accessToken");
-  const response = await fetch(`${ADMINS_URL}/AboutNous/toggle-active/${aboutId}/`, {
+  const response = await fetch(`${ADMINS_URL}/AboutNous/activate/${aboutId}/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -105,7 +105,25 @@ export const toggleAboutUsActive = async (aboutId: string): Promise<AboutNousRes
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to toggle About Us status.");
+    throw new Error(errorData.message || "Failed to activate About Us version.");
+  }
+
+  return response.json();
+};
+
+export const getAboutUsById = async (aboutId: string): Promise<AboutNousResponse> => {
+  const accessToken = localStorage.getItem("accessToken");
+  const response = await fetch(`${ADMINS_URL}/AboutNous/${aboutId}/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      ...(accessToken && { "Authorization": `Bearer ${accessToken}` }),
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to fetch About Us by ID.");
   }
 
   return response.json();

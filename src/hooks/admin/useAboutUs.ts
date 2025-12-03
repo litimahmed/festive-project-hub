@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createAboutNous, getAllAboutUs, getActiveAboutUs, updateAboutUs, toggleAboutUsActive } from "@/services/admin/aboutUsService";
+import { createAboutNous, getAllAboutUs, getActiveAboutUs, updateAboutUs, toggleAboutUsActive, getAboutUsById } from "@/services/admin/aboutUsService";
 import { AboutNousPayload } from "@/types/admin/aboutUs";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,6 +16,14 @@ export const useAboutUs = () => {
     queryKey: ["aboutUs", "active"],
     queryFn: getActiveAboutUs,
   });
+
+  const useAboutUsById = (aboutId: string | undefined) => {
+    return useQuery({
+      queryKey: ["aboutUs", "byId", aboutId],
+      queryFn: () => getAboutUsById(aboutId!),
+      enabled: !!aboutId,
+    });
+  };
 
   const createMutation = useMutation({
     mutationFn: createAboutNous,
@@ -78,6 +86,7 @@ export const useAboutUs = () => {
     isLoadingVersions,
     isLoadingActive,
     refetchVersions,
+    useAboutUsById,
     createAboutNous: (payload: AboutNousPayload) => createMutation.mutateAsync(payload),
     updateAboutUs: (aboutId: string, payload: AboutNousPayload) =>
       updateMutation.mutateAsync({ aboutId, payload }),
